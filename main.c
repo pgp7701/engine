@@ -1,8 +1,9 @@
 #include <stdint.h>
+#include <stdlib.h>
 
 uint64_t pow64 (unsigned int base, unsigned int index) {
 	uint64_t val = 1;
-	while (true) {
+	while (1) {
 		if (index & 1)
 			val *= 2;
 		index >>= 1;
@@ -56,12 +57,14 @@ void compute_uocc(BOARD * cboard) {
 		cboard->uoccsquares = *(cboard->pieces[i])^cboard->uoccsquares;
 }
 
-void move_gen(BOARD board, MOVE ** move_list) {
+void move_gen(BOARD board, MOVE * move_list) {
+	move_list = (MOVE *) malloc(sizeof(MOVE *));
 	int origin;
 	int destination;
 	uint64_t borigin;
 	uint64_t post1; //to be copied to after1
 	uint64_t post2; //to be copied to after2
+	int move_num = 0;
 	//wrook moves
 	while ((origin = __builtin_ffsll(*(board.pieces[wr])))) {
 		post1 = board.wrook;
@@ -72,6 +75,35 @@ void move_gen(BOARD board, MOVE ** move_list) {
 		for (int i = 0; i < num_rshifts; ++i) {
 			interm2 = interm2 >> 8;
 			interm1 = interm1 | interm2;
+			interm1 = interm1 & board.uoccsquares;
+			if (interm1) {
+				move_list = realloc(move_list, (move_num+1) * sizeof(MOVE *));
+				move_list[move_num].type1 = wr;
+				move_list[move_num].type2 = nothing;
+				post1 = board.wrook ^ borigin;
+				post1 = post1 ^ interm1;
+				post2 = 0;
+				move_list[move_num].after1 = post1;
+				move_list[move_num].after2 = post2;
+				++move_num;
+			}
+			else {
+				for (int i = 1; i < 12; i += 2) {
+					if (interm2 & *(board.pieces[i])) {
+						move_list = realloc(move_list, (move_num+1) * sizeof(MOVE *));
+						move_list[move_num].type1 = wr;
+						move_list[move_num].type2 = i;
+						post1 = board.wrook ^ borigin;
+						post1 = post1 ^ interm2;
+						post2 = *(board.pieces[i]) ^ interm2;
+						move_list[move_num].after1 = post1;
+						move_list[move_num].after2 = post2;
+						++move_num;
+					}
+				}
+				break;
+			}
+
 		}
 		interm2 = borigin;
 		int num_lshifts = (64 - origin) / 8;

@@ -1,11 +1,12 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 
-uint64_t pow64 (unsigned int base, unsigned int index) {
+uint64_t pow64 (unsigned long int base, unsigned int index) {
 	uint64_t val = 1;
 	while (1) {
 		if (index & 1)
-			val *= 2;
+			val *= base;
 		index >>= 1;
 		if (index == 0)
 			break;
@@ -57,8 +58,7 @@ void compute_uocc(BOARD * cboard) {
 		cboard->uoccsquares = *(cboard->pieces[i])^cboard->uoccsquares;
 }
 
-void move_gen(BOARD board, MOVE * move_list) {
-	move_list = (MOVE *) malloc(sizeof(MOVE *));
+int move_gen(BOARD board, MOVE * move_list) {
 	int origin;
 	int destination;
 	uint64_t borigin;
@@ -66,9 +66,9 @@ void move_gen(BOARD board, MOVE * move_list) {
 	uint64_t post2; //to be copied to after2
 	int move_num = 0;
 	//wrook moves
-	while ((origin = __builtin_ffsll(*(board.pieces[wr])))) {
+	while ((origin = __builtin_ffsll(board.wrook))) {
 		post1 = board.wrook;
-		borigin = pow64(2, origin);
+		borigin = pow64(2, origin - 1);
 		uint64_t interm1 = borigin;
 		uint64_t interm2 = borigin;
 		int num_rshifts = origin / 8;
@@ -77,6 +77,7 @@ void move_gen(BOARD board, MOVE * move_list) {
 			interm1 = interm1 | interm2;
 			interm1 = interm1 & board.uoccsquares;
 			if (interm1) {
+				printf("here1, %lu\n", interm1);
 				move_list = realloc(move_list, (move_num+1) * sizeof(MOVE *));
 				move_list[move_num].type1 = wr;
 				move_list[move_num].type2 = nothing;
@@ -88,14 +89,15 @@ void move_gen(BOARD board, MOVE * move_list) {
 				++move_num;
 			}
 			else {
-				for (int i = 1; i < 12; i += 2) {
-					if (interm2 & *(board.pieces[i])) {
+				for (int j = 1; j < 12; j += 2) {
+					if (interm2 & *(board.pieces[j])) {
+						printf("here2\n");	
 						move_list = realloc(move_list, (move_num+1) * sizeof(MOVE *));
 						move_list[move_num].type1 = wr;
-						move_list[move_num].type2 = i;
+						move_list[move_num].type2 = j;
 						post1 = board.wrook ^ borigin;
 						post1 = post1 ^ interm2;
-						post2 = *(board.pieces[i]) ^ interm2;
+						post2 = *(board.pieces[j]) ^ interm2;
 						move_list[move_num].after1 = post1;
 						move_list[move_num].after2 = post2;
 						++move_num;
@@ -105,25 +107,120 @@ void move_gen(BOARD board, MOVE * move_list) {
 			}
 
 		}
+		interm1 = borigin;
 		interm2 = borigin;
 		int num_lshifts = (64 - origin) / 8;
 		for (int i = 0; i < num_lshifts; ++i) {
 			interm2 = interm2 << 8;
 			interm1 = interm1 | interm2;
+			interm1 = interm1 & board.uoccsquares;
+			if (interm1) {
+				printf("here3\n");
+				move_list = realloc(move_list, (move_num+1) * sizeof(MOVE *));
+				move_list[move_num].type1 = wr;
+				move_list[move_num].type2 = nothing;
+				post1 = board.wrook ^ borigin;
+				post1 = post1 ^ interm1;
+				post2 = 0;
+				move_list[move_num].after1 = post1;
+				move_list[move_num].after2 = post2;
+				++move_num;
+			}
+			else {
+				for (int j = 1; j < 12; j += 2) {
+					if (interm2 & *(board.pieces[j])) {
+						printf("here4\n");
+						move_list = realloc(move_list, (move_num+1) * sizeof(MOVE *));
+						move_list[move_num].type1 = wr;
+						move_list[move_num].type2 = j;
+						post1 = board.wrook ^ borigin;
+						post1 = post1 ^ interm2;
+						post2 = *(board.pieces[j]) ^ interm2;
+						move_list[move_num].after1 = post1;
+						move_list[move_num].after2 = post2;
+						++move_num;
+					}
+				}
+				break;
+			}	
 		}
+		interm1 = borigin;
 		interm2 = borigin;
-		num_lshifts = ((origin % 8) + 7) % 8;
-		for (int i = 0; i < num_lshifts; ++i) {
-			interm2 = interm2 << 1;
-			interm1 = interm1 | interm2;
-		}
-		interm2 = borigin;
-		num_rshifts = (8 - (origin % 8)) % 8;
+		num_rshifts = ((origin % 8) + 7) % 8;
 		for (int i = 0; i < num_rshifts; ++i) {
 			interm2 = interm2 >> 1;
 			interm1 = interm1 | interm2;
+			interm1 = interm1 & board.uoccsquares;
+			if (interm1) {
+				printf("here5\n");
+				move_list = realloc(move_list, (move_num+1) * sizeof(MOVE *));
+				move_list[move_num].type1 = wr;
+				move_list[move_num].type2 = nothing;
+				post1 = board.wrook ^ borigin;
+				post1 = post1 ^ interm1;
+				post2 = 0;
+				move_list[move_num].after1 = post1;
+				move_list[move_num].after2 = post2;
+				++move_num;
+			}
+			else {
+				for (int j = 1; j < 12; j += 2) {
+					if (interm2 & *(board.pieces[j])) {
+						printf("here6\n");
+						move_list = realloc(move_list, (move_num+1) * sizeof(MOVE *));
+						move_list[move_num].type1 = wr;
+						move_list[move_num].type2 = j;
+						post1 = board.wrook ^ borigin;
+						post1 = post1 ^ interm2;
+						post2 = *(board.pieces[j]) ^ interm2;
+						move_list[move_num].after1 = post1;
+						move_list[move_num].after2 = post2;
+						++move_num;
+					}
+				}
+				break;
+			}	
 		}
+		interm1 = borigin;
+		interm2 = borigin;
+		num_lshifts = (8 - (origin % 8)) % 8;
+		for (int i = 0; i < num_lshifts; ++i) {
+			interm2 = interm2 << 1;
+			interm1 = interm1 | interm2;
+			interm1 = interm1 & board.uoccsquares;
+			if (interm1) {
+				printf("here7\n");
+				move_list = realloc(move_list, (move_num+1) * sizeof(MOVE *));
+				move_list[move_num].type1 = wr;
+				move_list[move_num].type2 = nothing;
+				post1 = board.wrook ^ borigin;
+				post1 = post1 ^ interm1;
+				post2 = 0;
+				move_list[move_num].after1 = post1;
+				move_list[move_num].after2 = post2;
+				++move_num;
+			}
+			else {
+				for (int j = 1; j < 12; j += 2) {
+					if (interm2 & *(board.pieces[j])) {
+						printf("here8\n");
+						move_list = realloc(move_list, (move_num+1) * sizeof(MOVE *));
+						move_list[move_num].type1 = wr;
+						move_list[move_num].type2 = j;
+						post1 = board.wrook ^ borigin;
+						post1 = post1 ^ interm2;
+						post2 = *(board.pieces[j]) ^ interm2;
+						move_list[move_num].after1 = post1;
+						move_list[move_num].after2 = post2;
+						++move_num;
+					}
+				}
+				break;
+			}	
+		}
+		board.wrook = board.wrook ^ borigin;
 	}
+	return move_num;
 }
 
 void init_board(BOARD * c_board) {
@@ -161,5 +258,8 @@ int main() {
 	init_board(&mainboard);
 	compute_occ(&mainboard);
 	compute_uocc(&mainboard);
+	MOVE * moves = (MOVE *) malloc(sizeof(MOVE *));
+	int test = move_gen(mainboard, moves);
+	printf("result: %d\n", test);
 	return 0;
 }

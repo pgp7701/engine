@@ -71,16 +71,16 @@ int move_gen(BOARD board, MOVE * move_list) {
 		borigin = pow64(2, origin - 1);
 		uint64_t interm1 = borigin;
 		uint64_t interm2 = borigin;
-		int num_rshifts = (origin - 1) / 8 + (origin - 1) % 8;
+		int num_rshifts = ((origin - 1) / 8 > (origin - 1) % 8) ? (origin - 1) % 8 : (origin - 1) / 8;
 		for (int i = 0; i < num_rshifts; ++i) {
-			interm2 = interm2 >> 8;
+			interm2 = interm2 >> 9;
 			interm1 = interm1 | interm2;
 			interm1 = interm1 & board.uoccsquares;
 			if (interm1) {
 				move_list = realloc(move_list, (move_num+1) * sizeof(MOVE *));
-				move_list[move_num].type1 = wr;
+				move_list[move_num].type1 = wb;
 				move_list[move_num].type2 = nothing;
-				post1 = board.wrook ^ borigin;
+				post1 = board.wbishop ^ borigin;
 				post1 = post1 ^ interm1;
 				post2 = 0;
 				move_list[move_num].after1 = post1;
@@ -91,9 +91,9 @@ int move_gen(BOARD board, MOVE * move_list) {
 				for (int j = 1; j < 12; j += 2) {
 					if (interm2 & *(board.pieces[j])) {
 						move_list = realloc(move_list, (move_num+1) * sizeof(MOVE *));
-						move_list[move_num].type1 = wr;
+						move_list[move_num].type1 = wb;
 						move_list[move_num].type2 = j;
-						post1 = board.wrook ^ borigin;
+						post1 = board.wbishop ^ borigin;
 						post1 = post1 ^ interm2;
 						post2 = *(board.pieces[j]) ^ interm2;
 						move_list[move_num].after1 = post1;
@@ -107,16 +107,16 @@ int move_gen(BOARD board, MOVE * move_list) {
 		}
 		interm1 = borigin;
 		interm2 = borigin;
-		int num_lshifts = (64 - origin) / 8;
+		int num_lshifts = ((64 - origin) / 8 > (64 - origin) % 8) ? (64 - origin) % 8 : (64 - origin) / 8;
 		for (int i = 0; i < num_lshifts; ++i) {
-			interm2 = interm2 << 8;
+			interm2 = interm2 << 9;
 			interm1 = interm1 | interm2;
 			interm1 = interm1 & board.uoccsquares;
 			if (interm1) {
 				move_list = realloc(move_list, (move_num+1) * sizeof(MOVE *));
-				move_list[move_num].type1 = wr;
+				move_list[move_num].type1 = wb;
 				move_list[move_num].type2 = nothing;
-				post1 = board.wrook ^ borigin;
+				post1 = board.wbishop ^ borigin;
 				post1 = post1 ^ interm1;
 				post2 = 0;
 				move_list[move_num].after1 = post1;
@@ -127,9 +127,9 @@ int move_gen(BOARD board, MOVE * move_list) {
 				for (int j = 1; j < 12; j += 2) {
 					if (interm2 & *(board.pieces[j])) {
 						move_list = realloc(move_list, (move_num+1) * sizeof(MOVE *));
-						move_list[move_num].type1 = wr;
+						move_list[move_num].type1 = wb;
 						move_list[move_num].type2 = j;
-						post1 = board.wrook ^ borigin;
+						post1 = board.wbishop ^ borigin;
 						post1 = post1 ^ interm2;
 						post2 = *(board.pieces[j]) ^ interm2;
 						move_list[move_num].after1 = post1;

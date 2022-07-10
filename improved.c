@@ -75,7 +75,7 @@ void get_mask(int piece, int * mask) {
 }
 
 int get_numshifts(int direction, int length, int origin) {
-	int numshifts = 0;
+	int numshifts = 8; //init to 8 so that final numshifts ternary evaluates to false case when length is multiple of 8
 	int room = 0;
 	int shift = 0;
 	if (length % 8) {
@@ -92,7 +92,7 @@ int get_numshifts(int direction, int length, int origin) {
 	}
 	shift = (length - shift) / 8;
 	if (direction == 0 && shift)
-		room = (7 - (origin - 1) / 8);
+		room = (7 - ((origin - 1) / 8));
 	else if (direction == 1 && shift)
 		room = (origin - 1) / 8;
 	if (shift)
@@ -131,6 +131,8 @@ int move_gen(BOARD board, MOVE * move_list) {
 			get_mask(i, mask);
 			if (mask[0]) {
 				for (int j = 1; j < 9; ++j) {
+					interm1 = borigin;
+					interm2 = borigin;
 					if (mask[j]) {
 						if ((j % 4) % 3) { //testing movedirection
 							num_shifts = get_numshifts(0, mask[j], origin);
@@ -313,11 +315,12 @@ void init_board(BOARD * c_board) {
 }
 
 int main() {
-	BOARD mainboard;
+	BOARD mainboard = {0};
 	init_board(&mainboard);
 	compute_occ(&mainboard);
 	compute_uocc(&mainboard);
 	MOVE * moves = (MOVE *) malloc(sizeof(MOVE));
+	BOARD cp = mainboard;
 	int test = move_gen(mainboard, moves);
 	printf("result: %d\n", test);
 	for (int i = 0; i < test; ++i)

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-uint64_t pow64 (unsigned long int base, unsigned int index) {
+uint64_t pow64 (unsigned long int base, unsigned int index) { // raises uint64_t to arbitrary power; doesn't test overflow
 	uint64_t val = 1;
 	while (1) {
 		if (index & 1)
@@ -41,11 +41,12 @@ enum PIECE {wk = 0, bk = 1, wq = 2, bq = 3, wn = 4, bn = 5, wb = 6, bb = 7, wr =
 typedef struct move {
 	enum PIECE type1;
 	enum PIECE type2;
-	uint64_t after1;
-	uint64_t after2;
+	uint64_t after1; //position of piece1 after move
+	uint64_t after2; //position of piece2 after move
+	//NOTHING and 0 imply no piece2
 } MOVE;
 
-void get_mask(int piece, int * mask) {
+void get_mask(int piece, int * mask) { // {repeat, l1, l2, r1, r2, l3, l4, r3, r4}
 	switch (piece) {
 		case wr:
 		case br:
@@ -129,12 +130,12 @@ int move_gen(BOARD board, MOVE * move_list) {
 			uint64_t interm1 = borigin;
 			uint64_t interm2 = borigin;
 			get_mask(i, mask);
-			if (mask[0]) {
-				for (int j = 1; j < 9; ++j) {
+			if (mask[0]) { //repeatable
+				for (int j = 1; j < 9; ++j) { //j represents current mask index; type of move
 					interm1 = borigin;
 					interm2 = borigin;
 					if (mask[j]) {
-						if ((j % 4) % 3) { //testing movedirection
+						if ((j % 4) % 3) { //testing movedirection for left
 							num_shifts = get_numshifts(0, mask[j], origin);
 							for (int k = 0; k < num_shifts; ++k) {
 								interm2 = interm2 << mask[j];
@@ -210,9 +211,9 @@ int move_gen(BOARD board, MOVE * move_list) {
 				}
 				*(board.pieces[i]) = *(board.pieces[i]) ^ borigin;
 			}
-			else {
+			else { //non-repeatable
 				for (int j = 1; j < 9; ++j) {
-					if (mask[j] && ((j % 4) % 3) && get_numshifts(0, mask[j], origin)) {
+					if (mask[j] && ((j % 4) % 3) && get_numshifts(0, mask[j], origin)) { //left
 						interm2 = interm2 << mask[j];
 						interm1 = interm1 | interm2;
 						interm1 = interm1 & board.uoccsquares;
@@ -245,7 +246,7 @@ int move_gen(BOARD board, MOVE * move_list) {
 					}
 					interm1 = borigin;
 					interm2 = borigin;
-					if (mask[j] && ((j % 4) % 3) && get_numshifts(1, mask[j], origin)) {
+					if (mask[j] && !((j % 4) % 3) && get_numshifts(1, mask[j], origin)) { //right
 						interm2 = interm2 >> mask[j];
 						interm1 = interm1 | interm2;
 						interm1 = interm1 & board.uoccsquares;
